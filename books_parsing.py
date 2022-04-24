@@ -96,8 +96,9 @@ def download_cover(cover_url):
 
 
 if __name__ == '__main__':
-    os.makedirs(BOOK_FOLDER, exist_ok=True)
-    os.makedirs(COVER_FOLDER, exist_ok=True)
+    # uncomment if start save files
+    # os.makedirs(BOOK_FOLDER, exist_ok=True)
+    # os.makedirs(COVER_FOLDER, exist_ok=True)
 
     parser = argparse.ArgumentParser(description=APP_DESCRIPTION)
 
@@ -145,6 +146,6 @@ if __name__ == '__main__':
                 print('-' * 20)
     else:
         print(
-            'Число "до" должно быть больше числа "от".\n'
-            'Например: python3 books_parsing.py 12 19'
+            '--end_id" должно быть больше числа "--start_id".\n'
+            'Например: python3 books_parsing.py --start_id 12 --end_id 19'
         )
