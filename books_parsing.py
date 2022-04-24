@@ -1,16 +1,23 @@
-import requests
 import argparse
+import json
 import os
+
+from urllib.parse import unquote, urljoin, urlsplit
+
+import requests
+
 from bs4 import BeautifulSoup as bs
 from pathvalidate import sanitize_filename
-from urllib.parse import urljoin, unquote, urlsplit
-
 
 BASE_TULULU_URL = 'https://tululu.org/'
 
 BOOK_FOLDER = 'Books'
 
 COVER_FOLDER = 'Covers'
+
+APP_DESCRIPTION = (
+    'Программа парсит сайт tululu.org, скачивает книги и информацию о них'
+)
 
 
 def get_valid_book(book_id):
@@ -20,7 +27,7 @@ def get_valid_book(book_id):
     if response.url != url:
         raise requests.HTTPError
     return response
-    
+
 
 def parse_book_page(page_source):
     book_info = {}
@@ -34,7 +41,10 @@ def parse_book_page(page_source):
         }
     )
 
-    book_cover_path = page_source.find('div', class_='bookimage').findChild('img').get('src')
+    book_cover_path = page_source.find(
+        'div', class_='bookimage'
+    ).findChild('img').get('src')
+
     book_info.update(
         {
             'cover_url': urljoin(BASE_TULULU_URL, book_cover_path)
@@ -50,7 +60,7 @@ def parse_book_page(page_source):
         )
     else:
         book_info.update({'comments': None})
-    
+
     book_genres_field = page_source.find('span', class_='d_book')
     if book_genres_field:
         book_info.update(
@@ -77,7 +87,7 @@ def download_book(response, book_id, book_name):
 def download_cover(cover_url):
     _, photo_name = os.path.split(unquote(urlsplit(cover_url).path))
     full_path = os.path.join(COVER_FOLDER, photo_name)
-    
+
     if not os.path.exists(full_path):
         response = requests.get(cover_url)
         response.raise_for_status()
@@ -89,33 +99,52 @@ if __name__ == '__main__':
     os.makedirs(BOOK_FOLDER, exist_ok=True)
     os.makedirs(COVER_FOLDER, exist_ok=True)
 
-    parser = argparse.ArgumentParser(description='Программа сокращает ссылки и показывает количество переходов по сокращенным ссылкам')
-    parser.add_argument('start_id', type=int, help='id "from"')
-    parser.add_argument('end_id', type=int, help='id "to" (should be more than start_id')
+    parser = argparse.ArgumentParser(description=APP_DESCRIPTION)
+
+    parser.add_argument(
+        '--start_id',
+        type=int,
+        default=1,
+        help='искать "от"'
+    )
+    parser.add_argument(
+        '--end_id',
+        type=int,
+        default=10,
+        help='искать "до" (должно быть больше чем "от")'
+    )
+
     args = parser.parse_args()
+
     start_id = args.start_id
     end_id = args.end_id
 
-    for book_id in range(start_id, end_id + 1):
-        try:
-            book_response = get_valid_book(book_id)
-            if book_response.ok:
-                book_info_url = f'https://tululu.org/b{book_id}/'
+    if end_id >= start_id:
+        for book_id in range(start_id, end_id + 1):
+            try:
+                book_response = get_valid_book(book_id)
+                if book_response.ok:
+                    book_info_url = f'https://tululu.org/b{book_id}/'
 
-                book_info_response = requests.get(book_info_url)
-                book_info_page_source = bs(book_info_response.text, 'html.parser')
+                    book_info_response = requests.get(book_info_url)
+                    book_info_page_source = bs(
+                        book_info_response.text,
+                        'html.parser'
+                        )
 
-                book_info = parse_book_page(book_info_page_source)
-                import json
-                print(json.dumps(book_info, indent=4, ensure_ascii=False))
-                print(f'Book [{book_id}]: DOWNLOADED.')
-                
-        except requests.HTTPError:
-            print(f'Book [{book_id}]: NOT FOUND.')
-        except requests.exceptions.RequestException:
-            print(f'Book [{book_id}]: BAD REQUEST.')
-        finally:
-            print('-'*20)
-                
-        
-            
+                    book_info = parse_book_page(book_info_page_source)
+
+                    print(json.dumps(book_info, indent=4, ensure_ascii=False))
+                    print(f'Book [{book_id}]: DOWNLOADED.')
+
+            except requests.HTTPError:
+                print(f'Book [{book_id}]: NOT FOUND.')
+            except requests.exceptions.RequestException:
+                print(f'Book [{book_id}]: BAD REQUEST.')
+            finally:
+                print('-' * 20)
+    else:
+        print(
+            'Число "до" должно быть больше числа "от".\n'
+            'Например: python3 books_parsing.py 12 19'
+        )

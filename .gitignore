@@ -3,3 +3,4 @@ env
 *.json
 Books
 Covers
+.vscode
