@@ -1,4 +1,5 @@
 import requests
+import argparse
 import os
 from bs4 import BeautifulSoup as bs
 from pathvalidate import sanitize_filename
@@ -21,31 +22,46 @@ def get_valid_book(book_id):
     return response
     
 
-def get_book_info(book_id):
-    url = f'https://tululu.org/b{book_id}/'
-    response = requests.get(url)
-    response.raise_for_status()
-    page_source = bs(response.text, 'html.parser')
+def parse_book_page(page_source):
+    book_info = {}
 
-    book_info = page_source.find('td', class_='ow_px_td')
-    book_name, book_author = book_info.find('h1').text.split('::')
+    book_meta = page_source.find('td', class_='ow_px_td')
+    title, author = book_meta.find('h1').text.split('::')
+    book_info.update(
+        {
+            'title': title.strip(),
+            'author': author.strip()
+        }
+    )
 
     book_cover_path = page_source.find('div', class_='bookimage').findChild('img').get('src')
-    book_cover_url = urljoin(BASE_TULULU_URL, book_cover_path)
+    book_info.update(
+        {
+            'cover_url': urljoin(BASE_TULULU_URL, book_cover_path)
+        }
+    )
 
     book_comments_fields = page_source.find_all('div', class_='texts')
     if book_comments_fields:
-        book_comments = [comment.find('span').text.strip() for comment in book_comments_fields]
+        book_info.update(
+            {
+                'comments': [comment.find('span').text.strip() for comment in book_comments_fields]
+            }
+        )
     else:
-        book_comments = None
-
+        book_info.update({'comments': None})
+    
     book_genres_field = page_source.find('span', class_='d_book')
     if book_genres_field:
-        book_genres = [genre.text for genre in book_genres_field.findChildren('a')]
+        book_info.update(
+            {
+                'genres': [genre.text for genre in book_genres_field.findChildren('a')]
+            }
+        )
     else:
-        book_genres = None
+        book_info.update({'genres': None})
 
-    return book_name.strip(), book_author.strip(), book_cover_url, book_comments, book_genres
+    return book_info
 
 
 def download_book(response, book_id, book_name):
@@ -72,24 +88,26 @@ def download_cover(cover_url):
 if __name__ == '__main__':
     os.makedirs(BOOK_FOLDER, exist_ok=True)
     os.makedirs(COVER_FOLDER, exist_ok=True)
-    for book_id in range(1, 11):
+
+    parser = argparse.ArgumentParser(description='Программа сокращает ссылки и показывает количество переходов по сокращенным ссылкам')
+    parser.add_argument('start_id', type=int, help='id "from"')
+    parser.add_argument('end_id', type=int, help='id "to" (should be more than start_id')
+    args = parser.parse_args()
+    start_id = args.start_id
+    end_id = args.end_id
+
+    for book_id in range(start_id, end_id + 1):
         try:
-            response = get_valid_book(book_id)
-            if response.ok:
-                book_name, book_author, book_cover_url, book_comments, book_genres = get_book_info(book_id)
+            book_response = get_valid_book(book_id)
+            if book_response.ok:
+                book_info_url = f'https://tululu.org/b{book_id}/'
 
-                download_book(response, book_id, book_name)
-                download_cover(book_cover_url)
+                book_info_response = requests.get(book_info_url)
+                book_info_page_source = bs(book_info_response.text, 'html.parser')
 
-                print(book_author)
-                print(book_name)
-                print(book_cover_url)
-                if book_comments:
-                    for comment in book_comments:
-                        print(comment)
-                if book_genres:
-                    print(book_genres)
-
+                book_info = parse_book_page(book_info_page_source)
+                import json
+                print(json.dumps(book_info, indent=4, ensure_ascii=False))
                 print(f'Book [{book_id}]: DOWNLOADED.')
                 
         except requests.HTTPError:
