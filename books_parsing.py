@@ -33,7 +33,13 @@ def get_book_info(book_id):
     book_cover_path = page_source.find('div', class_='bookimage').findChild('img').get('src')
     book_cover_url = urljoin(BASE_TULULU_URL, book_cover_path)
 
-    return book_name.strip(), book_author.strip(), book_cover_url
+    book_comments = page_source.find_all('div', class_='texts')
+    if book_comments:
+        book_comments_text = [comment.find('span').text.strip() for comment in book_comments]
+    else:
+        book_comments_text = []
+
+    return book_name.strip(), book_author.strip(), book_cover_url, book_comments_text
 
 
 def download_book(response, book_id, book_name):
@@ -64,10 +70,16 @@ if __name__ == '__main__':
         try:
             response = get_valid_book(book_id)
             if response.ok:
-                book_name, book_author, book_cover_url = get_book_info(book_id)
+                book_name, book_author, book_cover_url, book_comments = get_book_info(book_id)
 
                 download_book(response, book_id, book_name)
                 download_cover(book_cover_url)
+
+                print(book_author)
+                print(book_name)
+                print(book_cover_url)
+                for comment in book_comments:
+                    print(comment)
 
                 print(f'Book [{book_id}]: DOWNLOADED.')
                 
@@ -75,6 +87,8 @@ if __name__ == '__main__':
             print(f'Book [{book_id}]: NOT FOUND.')
         except requests.exceptions.RequestException:
             print(f'Book [{book_id}]: BAD REQUEST.')
+        finally:
+            print('-'*20)
                 
         
             
