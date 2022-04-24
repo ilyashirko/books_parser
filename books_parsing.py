@@ -33,13 +33,19 @@ def get_book_info(book_id):
     book_cover_path = page_source.find('div', class_='bookimage').findChild('img').get('src')
     book_cover_url = urljoin(BASE_TULULU_URL, book_cover_path)
 
-    book_comments = page_source.find_all('div', class_='texts')
-    if book_comments:
-        book_comments_text = [comment.find('span').text.strip() for comment in book_comments]
+    book_comments_fields = page_source.find_all('div', class_='texts')
+    if book_comments_fields:
+        book_comments = [comment.find('span').text.strip() for comment in book_comments_fields]
     else:
-        book_comments_text = []
+        book_comments = None
 
-    return book_name.strip(), book_author.strip(), book_cover_url, book_comments_text
+    book_genres_field = page_source.find('span', class_='d_book')
+    if book_genres_field:
+        book_genres = [genre.text for genre in book_genres_field.findChildren('a')]
+    else:
+        book_genres = None
+
+    return book_name.strip(), book_author.strip(), book_cover_url, book_comments, book_genres
 
 
 def download_book(response, book_id, book_name):
@@ -70,7 +76,7 @@ if __name__ == '__main__':
         try:
             response = get_valid_book(book_id)
             if response.ok:
-                book_name, book_author, book_cover_url, book_comments = get_book_info(book_id)
+                book_name, book_author, book_cover_url, book_comments, book_genres = get_book_info(book_id)
 
                 download_book(response, book_id, book_name)
                 download_cover(book_cover_url)
@@ -78,8 +84,11 @@ if __name__ == '__main__':
                 print(book_author)
                 print(book_name)
                 print(book_cover_url)
-                for comment in book_comments:
-                    print(comment)
+                if book_comments:
+                    for comment in book_comments:
+                        print(comment)
+                if book_genres:
+                    print(book_genres)
 
                 print(f'Book [{book_id}]: DOWNLOADED.')
                 
