@@ -1,11 +1,10 @@
 import argparse
 import json
 import os
-
 from urllib.parse import unquote, urljoin, urlsplit
 
+import lxml
 import requests
-
 from bs4 import BeautifulSoup as bs
 from pathvalidate import sanitize_filename
 
@@ -132,7 +131,7 @@ if __name__ == '__main__':
             response = requests.get(book_url)
             page_source = bs(
                 response.text,
-                'html.parser'
+                'lxml'
                 )
 
             book_info = parse_book_page(page_source)
