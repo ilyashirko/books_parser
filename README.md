@@ -7,7 +7,7 @@ git clone https://github.com/ilyashirko/books_parser/
 cd books_parser
 python3 -m venv env
 source env/bin/activate
-pip3 install requirements.txt
+pip3 install -r requirements.txt
 ```
 ## Запуск
 Для запуска вам необходимо указать аргументы  
