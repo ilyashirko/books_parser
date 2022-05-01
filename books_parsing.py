@@ -33,42 +33,26 @@ def parse_book_page(page_source):
 
     book_meta = page_source.find('td', class_='ow_px_td')
     title, author = book_meta.find('h1').text.split('::')
-    book_info.update(
-        {
-            'title': title.strip(),
-            'author': author.strip()
-        }
-    )
+    book_info['title'] = title.strip()
+    book_info['author'] = author.strip()
 
     cover_path = page_source.find(
         'div', class_='bookimage'
     ).findChild('img').get('src')
 
-    book_info.update(
-        {
-            'cover_url': urljoin(BASE_TULULU_URL, cover_path)
-        }
-    )
+    book_info['cover_url'] = urljoin(BASE_TULULU_URL, cover_path)
 
     comments_fields = page_source.find_all('div', class_='texts')
     if comments_fields:
-        book_info.update(
-            {
-                'comments': [comment.find('span').text.strip() for comment in comments_fields]
-            }
-        )
+        book_info['comments'] = [comment.find('span').text.strip() for comment in comments_fields]
     else:
-        book_info.update({'comments': None})
+        book_info['comments'] = None
 
     genres_field = page_source.find('span', class_='d_book')
     if genres_field:
-        book_info.update(
-            {
-                'genres': [genre.text for genre in genres_field.findChildren('a')]
-            }
-        )
+        book_info['genres'] = [genre.text for genre in genres_field.findChildren('a')]
     else:
-        book_info.update({'genres': None})
+        book_info['genres'] = None
 
     return book_info
 
