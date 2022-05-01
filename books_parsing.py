@@ -41,31 +41,31 @@ def parse_book_page(page_source):
         }
     )
 
-    book_cover_path = page_source.find(
+    cover_path = page_source.find(
         'div', class_='bookimage'
     ).findChild('img').get('src')
 
     book_info.update(
         {
-            'cover_url': urljoin(BASE_TULULU_URL, book_cover_path)
+            'cover_url': urljoin(BASE_TULULU_URL, cover_path)
         }
     )
 
-    book_comments_fields = page_source.find_all('div', class_='texts')
-    if book_comments_fields:
+    comments_fields = page_source.find_all('div', class_='texts')
+    if comments_fields:
         book_info.update(
             {
-                'comments': [comment.find('span').text.strip() for comment in book_comments_fields]
+                'comments': [comment.find('span').text.strip() for comment in comments_fields]
             }
         )
     else:
         book_info.update({'comments': None})
 
-    book_genres_field = page_source.find('span', class_='d_book')
-    if book_genres_field:
+    genres_field = page_source.find('span', class_='d_book')
+    if genres_field:
         book_info.update(
             {
-                'genres': [genre.text for genre in book_genres_field.findChildren('a')]
+                'genres': [genre.text for genre in genres_field.findChildren('a')]
             }
         )
     else:
@@ -127,15 +127,15 @@ if __name__ == '__main__':
         try:
             book_response = get_valid_book(book_id)
             
-            book_info_url = f'https://tululu.org/b{book_id}/'
+            book_url = f'https://tululu.org/b{book_id}/'
 
-            book_info_response = requests.get(book_info_url)
-            book_info_page_source = bs(
-                book_info_response.text,
+            response = requests.get(book_url)
+            page_source = bs(
+                response.text,
                 'html.parser'
                 )
 
-            book_info = parse_book_page(book_info_page_source)
+            book_info = parse_book_page(page_source)
 
             print(json.dumps(book_info, indent=4, ensure_ascii=False))
             print(f'Book [{book_id}]: DOWNLOADED.')
