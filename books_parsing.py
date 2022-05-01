@@ -8,12 +8,6 @@ import requests
 from bs4 import BeautifulSoup as bs
 from pathvalidate import sanitize_filename
 
-BASE_TULULU_URL = 'https://tululu.org/'
-
-BOOK_FOLDER = 'Books'
-
-COVER_FOLDER = 'Covers'
-
 APP_DESCRIPTION = (
     'Программа парсит сайт tululu.org, скачивает книги и информацию о них'
 )
@@ -28,7 +22,7 @@ def get_valid_book(book_id):
     return response
 
 
-def parse_book_page(page_source):
+def parse_book_page(page_source, base_url = 'https://tululu.org/'):
     book_info = {}
 
     book_meta = page_source.find('td', class_='ow_px_td')
@@ -40,7 +34,7 @@ def parse_book_page(page_source):
         'div', class_='bookimage'
     ).findChild('img').get('src')
 
-    book_info['cover_url'] = urljoin(BASE_TULULU_URL, cover_path)
+    book_info['cover_url'] = urljoin(base_url, cover_path)
 
     comments_fields = page_source.find_all('div', class_='texts')
     if comments_fields:
@@ -57,19 +51,19 @@ def parse_book_page(page_source):
     return book_info
 
 
-def download_book(response, book_id, book_name):
+def download_book(response, book_id, book_name, book_folder = 'Books'):
     correct_book_name = sanitize_filename(book_name)
     full_path = os.path.join(
-        BOOK_FOLDER,
+        book_folder,
         f'{book_id}. {correct_book_name}.txt'
     )
     with open(full_path, 'wb') as new_book:
         new_book.write(response.content)
 
 
-def download_cover(cover_url):
+def download_cover(cover_url, cover_folder = 'Cover'):
     _, photo_name = os.path.split(unquote(urlsplit(cover_url).path))
-    full_path = os.path.join(COVER_FOLDER, photo_name)
+    full_path = os.path.join(cover_folder, photo_name)
 
     if not os.path.exists(full_path):
         response = requests.get(cover_url)
