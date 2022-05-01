@@ -126,7 +126,6 @@ if __name__ == '__main__':
     for book_id in range(start_id, end_id + 1):
         try:
             book_response = get_valid_book(book_id)
-            book_response.raise_for_status()
             
             book_info_url = f'https://tululu.org/b{book_id}/'
 
@@ -143,8 +142,7 @@ if __name__ == '__main__':
 
         except requests.HTTPError:
             print(f'Book [{book_id}]: NOT FOUND.')
-        except (requests.exceptions.RequestException,
-                requests.exceptions.HTTPError):
+        except requests.exceptions.RequestException:
             print(f'Book [{book_id}]: BAD REQUEST.')
         finally:
             print('-' * 20)
