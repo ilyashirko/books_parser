@@ -13,16 +13,24 @@ APP_DESCRIPTION = (
 )
 
 
+class RedirectError(Exception):
+    def __init__(self, text='произошел редирект...'):
+        self.text = text
+
+    def __str__(self):
+        return self.text
+
+
 def get_valid_book(book_id):
     url = f'https://tululu.org/txt.php?id={book_id}'
     response = requests.get(url)
     response.raise_for_status()
     if response.url != url:
-        raise requests.HTTPError
+        raise RedirectError(f'Book [{book_id}] NOT FOUND: REDIRECTED TO {response.url}.')
     return response
 
 
-def parse_book_page(page_source, base_url = 'https://tululu.org/'):
+def parse_book_page(page_source, book_url):
     book_info = {}
 
     book_meta = page_source.find('td', class_='ow_px_td')
@@ -34,7 +42,7 @@ def parse_book_page(page_source, base_url = 'https://tululu.org/'):
         'div', class_='bookimage'
     ).findChild('img').get('src')
 
-    book_info['cover_url'] = urljoin(base_url, cover_path)
+    book_info['cover_url'] = urljoin(book_url, cover_path)
 
     comments_fields = page_source.find_all('div', class_='texts')
     if comments_fields:
@@ -52,6 +60,7 @@ def parse_book_page(page_source, base_url = 'https://tululu.org/'):
 
 
 def download_book(response, book_id, book_name, book_folder = 'Books'):
+    os.makedirs(book_folder, exist_ok=True)
     correct_book_name = sanitize_filename(book_name)
     full_path = os.path.join(
         book_folder,
@@ -61,15 +70,21 @@ def download_book(response, book_id, book_name, book_folder = 'Books'):
         new_book.write(response.content)
 
 
-def download_cover(cover_url, cover_folder = 'Cover'):
+def download_cover(cover_url, cover_folder = 'Covers'):
+    os.makedirs(cover_folder, exist_ok=True)
     _, photo_name = os.path.split(unquote(urlsplit(cover_url).path))
     full_path = os.path.join(cover_folder, photo_name)
 
-    if not os.path.exists(full_path):
-        response = requests.get(cover_url)
-        response.raise_for_status()
-        with open(full_path, 'wb') as photo:
-            photo.write(response.content)
+    if os.path.exists(full_path):
+        return
+
+    response = requests.get(cover_url)
+    response.raise_for_status()
+    if response.url != cover_url:
+        raise RedirectError(f'Book [{book_id}]: NOT FOUND IMAGE, REDIRECTED TO {response.url}.')
+
+    with open(full_path, 'wb') as photo:
+        photo.write(response.content)
 
 
 if __name__ == '__main__':
@@ -107,18 +122,24 @@ if __name__ == '__main__':
             book_url = f'https://tululu.org/b{book_id}/'
 
             response = requests.get(book_url)
+            if book_url != response.url:
+                raise RedirectError(f'Book [{book_id}]: NOT FOUND BOOK INFO, REDIRECTED TO {response.url}.')
+                
             page_source = bs(
                 response.text,
                 'lxml'
-                )
+            )
 
-            book_info = parse_book_page(page_source)
+            book_info = parse_book_page(page_source, book_url)
+
+            download_book(book_response, book_id, book_info['title'])
+            download_cover(book_info['cover_url'])
 
             print(json.dumps(book_info, indent=4, ensure_ascii=False))
             print(f'Book [{book_id}]: DOWNLOADED.')
 
-        except requests.HTTPError:
-            print(f'Book [{book_id}]: NOT FOUND.')
+        except RedirectError as error:
+            print(error)
         except requests.exceptions.RequestException:
             print(f'Book [{book_id}]: BAD REQUEST.')
         finally:
