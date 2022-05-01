@@ -96,10 +96,6 @@ def download_cover(cover_url):
 
 
 if __name__ == '__main__':
-    # uncomment if start save files
-    # os.makedirs(BOOK_FOLDER, exist_ok=True)
-    # os.makedirs(COVER_FOLDER, exist_ok=True)
-
     parser = argparse.ArgumentParser(description=APP_DESCRIPTION)
 
     parser.add_argument(
