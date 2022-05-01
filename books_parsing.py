@@ -116,32 +116,35 @@ if __name__ == '__main__':
     start_id = args.start_id
     end_id = args.end_id
 
-    if end_id >= start_id:
-        for book_id in range(start_id, end_id + 1):
-            try:
-                book_response = get_valid_book(book_id)
-                if book_response.ok:
-                    book_info_url = f'https://tululu.org/b{book_id}/'
-
-                    book_info_response = requests.get(book_info_url)
-                    book_info_page_source = bs(
-                        book_info_response.text,
-                        'html.parser'
-                        )
-
-                    book_info = parse_book_page(book_info_page_source)
-
-                    print(json.dumps(book_info, indent=4, ensure_ascii=False))
-                    print(f'Book [{book_id}]: DOWNLOADED.')
-
-            except requests.HTTPError:
-                print(f'Book [{book_id}]: NOT FOUND.')
-            except requests.exceptions.RequestException:
-                print(f'Book [{book_id}]: BAD REQUEST.')
-            finally:
-                print('-' * 20)
-    else:
+    if end_id < start_id:
         print(
             '--end_id" должно быть больше числа "--start_id".\n'
             'Например: python3 books_parsing.py --start_id 12 --end_id 19'
         )
+        exit()
+
+    for book_id in range(start_id, end_id + 1):
+        try:
+            book_response = get_valid_book(book_id)
+            book_response.raise_for_status()
+            
+            book_info_url = f'https://tululu.org/b{book_id}/'
+
+            book_info_response = requests.get(book_info_url)
+            book_info_page_source = bs(
+                book_info_response.text,
+                'html.parser'
+                )
+
+            book_info = parse_book_page(book_info_page_source)
+
+            print(json.dumps(book_info, indent=4, ensure_ascii=False))
+            print(f'Book [{book_id}]: DOWNLOADED.')
+
+        except requests.HTTPError:
+            print(f'Book [{book_id}]: NOT FOUND.')
+        except (requests.exceptions.RequestException,
+                requests.exceptions.HTTPError):
+            print(f'Book [{book_id}]: BAD REQUEST.')
+        finally:
+            print('-' * 20)
