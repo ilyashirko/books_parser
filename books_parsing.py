@@ -22,6 +22,17 @@ class RedirectError(Exception):
         return self.text
 
 
+def text_length_limit(text, limit=140):
+    if len(text) <= limit:
+        return text
+    splited_text = text.split('. ')
+    new_text = ' '.join(splited_text[:len(splited_text) - 1])
+    if new_text == text:
+        return text[:limit]
+    else:
+        return text_length_limit(new_text)
+
+
 def was_redirected(original_url, actual_url):
     return original_url != actual_url
 
@@ -62,7 +73,7 @@ def download_book(response, book_id, book_name, book_folder = 'Books'):
     correct_book_name = sanitize_filename(book_name)
     full_path = os.path.join(
         book_folder,
-        f'{book_id}. {correct_book_name}.txt'
+        f'{text_length_limit(f"{book_id}. {correct_book_name}")}.txt'
     )
     with open(full_path, 'wb') as new_book:
         new_book.write(response.content)
