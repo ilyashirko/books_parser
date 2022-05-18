@@ -151,6 +151,10 @@ if __name__ == '__main__':
 
         except RedirectError as error:
             print(error)
+        except requests.exceptions.ConnectionError:
+            print('Connection error')
+        except requests.exceptions.HTTPError:
+            print('HTTP error')
         except requests.exceptions.RequestException:
             print(f'Book [{book_id}]: BAD REQUEST.')
         finally:
