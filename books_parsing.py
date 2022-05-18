@@ -131,6 +131,7 @@ if __name__ == '__main__':
             book_url = f'https://tululu.org/b{book_id}/'
 
             response = requests.get(book_url)
+            response.raise_for_status()
             if was_redirected(book_url, response.url):
                 raise RedirectError(f'Book [{book_id}]: NOT FOUND BOOK INFO, REDIRECTED TO {response.url}.')
                 
