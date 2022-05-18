@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+from textwrap import dedent
 from urllib.parse import unquote, urljoin, urlsplit
 
 import lxml
@@ -21,11 +22,15 @@ class RedirectError(Exception):
         return self.text
 
 
+def was_redirected(original_url, actual_url):
+    return original_url != actual_url
+
+
 def get_valid_book(book_id):
     url = f'https://tululu.org/txt.php?id={book_id}'
     response = requests.get(url)
     response.raise_for_status()
-    if response.url != url:
+    if was_redirected(response.url, url):
         raise RedirectError(f'Book [{book_id}] NOT FOUND: REDIRECTED TO {response.url}.')
     return response
 
@@ -80,7 +85,7 @@ def download_cover(cover_url, cover_folder = 'Covers'):
 
     response = requests.get(cover_url)
     response.raise_for_status()
-    if response.url != cover_url:
+    if was_redirected(cover_url, response.url):
         raise RedirectError(f'Book [{book_id}]: NOT FOUND IMAGE, REDIRECTED TO {response.url}.')
 
     with open(full_path, 'wb') as photo:
@@ -110,8 +115,12 @@ if __name__ == '__main__':
 
     if end_id < start_id:
         print(
-            '--end_id" должно быть больше числа "--start_id".\n'
-            'Например: python3 books_parsing.py --start_id 12 --end_id 19'
+            dedent(
+                '''
+                "--end_id" должно быть больше числа "--start_id"
+                Например: python3 books_parsing.py --start_id 12 --end_id 19
+                '''
+            ) 
         )
         exit()
 
@@ -122,7 +131,7 @@ if __name__ == '__main__':
             book_url = f'https://tululu.org/b{book_id}/'
 
             response = requests.get(book_url)
-            if book_url != response.url:
+            if was_redirected(book_url, response.url):
                 raise RedirectError(f'Book [{book_id}]: NOT FOUND BOOK INFO, REDIRECTED TO {response.url}.')
                 
             page_source = bs(
