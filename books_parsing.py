@@ -161,6 +161,7 @@ if __name__ == '__main__':
                     Repeating after 5 seconds...
                     """
                 ))
+                input(dir(error))
                 time.sleep(5)
                 response = requests.get(error.response.url)
                 if response.ok:
