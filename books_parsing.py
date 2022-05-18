@@ -1,5 +1,6 @@
 import argparse
 import json
+import time
 import os
 from textwrap import dedent
 from urllib.parse import unquote, urljoin, urlsplit
@@ -151,8 +152,20 @@ if __name__ == '__main__':
 
         except RedirectError as error:
             print(error)
-        except requests.exceptions.ConnectionError:
-            print('Connection error')
+        except requests.exceptions.ConnectionError as error:
+            while True:
+                print(dedent(
+                    f"""
+                    {error}
+                    
+                    Repeating after 5 seconds...
+                    """
+                ))
+                time.sleep(5)
+                response = requests.get(error.response.url)
+                if response.ok:
+                    break
+
         except requests.exceptions.HTTPError:
             print('HTTP error')
         except requests.exceptions.RequestException:
