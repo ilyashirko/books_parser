@@ -35,8 +35,10 @@ def get_valid_book(book_id):
     return response
 
 
-def parse_book_page(page_source, book_url):
+def parse_book_page(response, book_url):
     book_info = {}
+
+    page_source = bs(response.text, 'lxml')
 
     book_meta = page_source.find('td', class_='ow_px_td')
     title, author = book_meta.find('h1').text.split('::')
@@ -132,15 +134,11 @@ if __name__ == '__main__':
 
             response = requests.get(book_url)
             response.raise_for_status()
+
             if was_redirected(book_url, response.url):
                 raise RedirectError(f'Book [{book_id}]: NOT FOUND BOOK INFO, REDIRECTED TO {response.url}.')
-                
-            page_source = bs(
-                response.text,
-                'lxml'
-            )
-
-            book_info = parse_book_page(page_source, book_url)
+            
+            book_info = parse_book_page(response, book_url)
 
             download_book(book_response, book_id, book_info['title'])
             download_cover(book_info['cover_url'])
