@@ -1,4 +1,5 @@
 import argparse
+from contextlib import suppress
 import json
 import time
 import os
@@ -13,7 +14,6 @@ from pathvalidate import sanitize_filename
 APP_DESCRIPTION = (
     'Программа парсит сайт tululu.org, скачивает книги и информацию о них'
 )
-
 
 class RedirectError(Exception):
     def __init__(self, text='произошел редирект...'):
@@ -153,22 +153,16 @@ if __name__ == '__main__':
         except RedirectError as error:
             print(error)
         except requests.exceptions.ConnectionError as error:
+            print(error)
             while True:
-                print(dedent(
-                    f"""
-                    {error}
-                    
-                    Repeating after 5 seconds...
-                    """
-                ))
-                input(dir(error))
                 time.sleep(5)
-                response = requests.get(error.response.url)
-                if response.ok:
-                    break
-
-        except requests.exceptions.HTTPError:
-            print('HTTP error')
+                print('Trying to reconnect...')
+                with suppress(requests.exceptions):
+                    response = requests.get(error.response.url)
+                    if response.ok:
+                        break
+        except requests.exceptions.HTTPError as error:
+            print(f'Book [{book_id}]:\n{error}')
         except requests.exceptions.RequestException:
             print(f'Book [{book_id}]: BAD REQUEST.')
         finally:
