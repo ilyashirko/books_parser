@@ -38,34 +38,28 @@ def was_redirected(original_url, actual_url):
 
 
 def parse_book_page(response, book_url):
-    book_info = {}
+    book_metadata = {}
 
     page_source = bs(response.text, 'lxml')
 
     book_meta = page_source.find('td', class_='ow_px_td')
     title, author = book_meta.find('h1').text.split('::')
-    book_info['title'] = title.strip()
-    book_info['author'] = author.strip()
+    book_metadata['title'] = title.strip()
+    book_metadata['author'] = author.strip()
 
     cover_path = page_source.find(
         'div', class_='bookimage'
     ).findChild('img').get('src')
 
-    book_info['cover_url'] = urljoin(book_url, cover_path)
+    book_metadata['cover_url'] = urljoin(book_url, cover_path)
 
     comments_fields = page_source.find_all('div', class_='texts')
-    if comments_fields:
-        book_info['comments'] = [comment.find('span').text.strip() for comment in comments_fields]
-    else:
-        book_info['comments'] = None
-
+    book_metadata['comments'] = [comment.find('span').text.strip() for comment in comments_fields]
+    
     genres_field = page_source.find('span', class_='d_book')
-    if genres_field:
-        book_info['genres'] = [genre.text for genre in genres_field.findChildren('a')]
-    else:
-        book_info['genres'] = None
-
-    return book_info
+    book_metadata['genres'] = [genre.text for genre in genres_field.findChildren('a')]
+    
+    return book_metadata
 
 
 def download_book(response, book_id, book_name, book_folder = 'Books'):
