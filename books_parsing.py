@@ -26,15 +26,6 @@ def was_redirected(original_url, actual_url):
     return original_url != actual_url
 
 
-def get_valid_book(book_id):
-    url = f'https://tululu.org/txt.php?id={book_id}'
-    response = requests.get(url)
-    response.raise_for_status()
-    if was_redirected(response.url, url):
-        raise RedirectError(f'Book [{book_id}] NOT FOUND: REDIRECTED TO {response.url}.')
-    return response
-
-
 def parse_book_page(response, book_url):
     book_info = {}
 
@@ -87,6 +78,7 @@ def download_cover(cover_url, cover_folder = 'Covers'):
 
     response = requests.get(cover_url)
     response.raise_for_status()
+    
     if was_redirected(cover_url, response.url):
         raise RedirectError(f'Book [{book_id}]: NOT FOUND IMAGE, REDIRECTED TO {response.url}.')
 
@@ -128,22 +120,29 @@ if __name__ == '__main__':
 
     for book_id in range(start_id, end_id + 1):
         try:
-            book_response = get_valid_book(book_id)
-            
-            book_url = f'https://tululu.org/b{book_id}/'
+            download_book_url = f'https://tululu.org/txt.php?id={book_id}'
 
-            response = requests.get(book_url)
+            download_book_response = requests.get(download_book_url)
+            download_book_response.raise_for_status()
+
+            if was_redirected(download_book_url, download_book_response.url):
+                raise RedirectError(f'Book [{book_id}] NOT FOUND: REDIRECTED TO {response.url}.')
+            
+            download_book(download_book_response, book_id, book_metadata['title'])
+
+            book_main_url = f'https://tululu.org/b{book_id}/'
+
+            response = requests.get(book_main_url)
             response.raise_for_status()
 
-            if was_redirected(book_url, response.url):
+            if was_redirected(book_main_url, response.url):
                 raise RedirectError(f'Book [{book_id}]: NOT FOUND BOOK INFO, REDIRECTED TO {response.url}.')
             
-            book_info = parse_book_page(response, book_url)
+            book_metadata = parse_book_page(response, book_main_url)
+            
+            download_cover(book_metadata['cover_url'])
 
-            download_book(book_response, book_id, book_info['title'])
-            download_cover(book_info['cover_url'])
-
-            print(json.dumps(book_info, indent=4, ensure_ascii=False))
+            print(json.dumps(book_metadata, indent=4, ensure_ascii=False))
             print(f'Book [{book_id}]: DOWNLOADED.')
 
         except RedirectError as error:
