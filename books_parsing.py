@@ -78,7 +78,7 @@ def download_cover(cover_url, cover_folder = 'Covers'):
 
     response = requests.get(cover_url)
     response.raise_for_status()
-    
+
     if was_redirected(cover_url, response.url):
         raise RedirectError(f'Book [{book_id}]: NOT FOUND IMAGE, REDIRECTED TO {response.url}.')
 
@@ -128,8 +128,6 @@ if __name__ == '__main__':
             if was_redirected(download_book_url, download_book_response.url):
                 raise RedirectError(f'Book [{book_id}] NOT FOUND: REDIRECTED TO {response.url}.')
             
-            download_book(download_book_response, book_id, book_metadata['title'])
-
             book_main_url = f'https://tululu.org/b{book_id}/'
 
             response = requests.get(book_main_url)
@@ -140,6 +138,7 @@ if __name__ == '__main__':
             
             book_metadata = parse_book_page(response, book_main_url)
             
+            download_book(download_book_response, book_id, book_metadata['title'])
             download_cover(book_metadata['cover_url'])
 
             print(json.dumps(book_metadata, indent=4, ensure_ascii=False))
