@@ -126,13 +126,13 @@ if __name__ == '__main__':
 
     for book_id in range(start_id, end_id + 1):
         try:
-            download_book_url = f'https://tululu.org/txt.php?id={book_id}'
+            download_book_url = f'https://tululu.org/txt.php'
 
-            download_book_response = requests.get(download_book_url)
+            download_book_response = requests.get(download_book_url, params={'id': book_id})
             download_book_response.raise_for_status()
 
-            if was_redirected(download_book_url, download_book_response.url):
-                raise RedirectError(f'Book [{book_id}] NOT FOUND: REDIRECTED TO {response.url}.')
+            if was_redirected(f"{download_book_url}?id={book_id}", download_book_response.url):
+                raise RedirectError(f'Book [{book_id}] NOT FOUND: REDIRECTED TO {download_book_response.url}.')
             
             book_main_url = f'https://tululu.org/b{book_id}/'
 
