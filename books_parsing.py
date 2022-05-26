@@ -23,6 +23,11 @@ class RedirectError(Exception):
         return self.text
 
 
+def check_for_redirect(request_url, response_url):
+    if request_url != response_url:
+        raise RedirectError(f'REDIRECTED FROM "{request_url}" TO {response_url}.')
+
+
 def text_length_limit(text, limit=140):
     if len(text) <= limit:
         return text
@@ -85,9 +90,8 @@ def download_cover(cover_url, cover_folder = 'Covers'):
     response = requests.get(cover_url)
     response.raise_for_status()
 
-    if was_redirected(cover_url, response.url):
-        raise RedirectError(f'Book [{book_id}]: NOT FOUND IMAGE, REDIRECTED TO {response.url}.')
-
+    check_for_redirect(cover_url, response.url)
+    
     with open(full_path, 'wb') as photo:
         photo.write(response.content)
 
@@ -131,16 +135,14 @@ if __name__ == '__main__':
             download_book_response = requests.get(download_book_url, params={'id': book_id})
             download_book_response.raise_for_status()
 
-            if was_redirected(f"{download_book_url}?id={book_id}", download_book_response.url):
-                raise RedirectError(f'Book [{book_id}] NOT FOUND: REDIRECTED TO {download_book_response.url}.')
+            check_for_redirect(f"{download_book_url}?id={book_id}", download_book_response.url)
             
             book_main_url = f'https://tululu.org/b{book_id}/'
 
             response = requests.get(book_main_url)
             response.raise_for_status()
 
-            if was_redirected(book_main_url, response.url):
-                raise RedirectError(f'Book [{book_id}]: NOT FOUND BOOK INFO, REDIRECTED TO {response.url}.')
+            check_for_redirect(book_main_url, response.url)
             
             book_metadata = parse_book_page(response, book_main_url)
             
