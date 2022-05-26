@@ -44,28 +44,28 @@ def was_redirected(original_url, actual_url):
 
 
 def parse_book_page(response, book_url):
-    book_metadata = {}
+    book = {}
 
     page_source = bs(response.text, 'lxml')
 
     book_meta = page_source.find('td', class_='ow_px_td')
     title, author = book_meta.find('h1').text.split('::')
-    book_metadata['title'] = title.strip()
-    book_metadata['author'] = author.strip()
+    book['title'] = title.strip()
+    book['author'] = author.strip()
 
     cover_path = page_source.find(
         'div', class_='bookimage'
     ).findChild('img').get('src')
 
-    book_metadata['cover_url'] = urljoin(book_url, cover_path)
+    book['cover_url'] = urljoin(book_url, cover_path)
 
     comments_fields = page_source.find_all('div', class_='texts')
-    book_metadata['comments'] = [comment.find('span').text.strip() for comment in comments_fields]
+    book['comments'] = [comment.find('span').text.strip() for comment in comments_fields]
     
     genres_field = page_source.find('span', class_='d_book')
-    book_metadata['genres'] = [genre.text for genre in genres_field.findChildren('a')]
+    book['genres'] = [genre.text for genre in genres_field.findChildren('a')]
     
-    return book_metadata
+    return book
 
 
 def download_book(response, book_id, book_name, book_folder = 'Books'):
@@ -144,12 +144,12 @@ if __name__ == '__main__':
 
             check_for_redirect(book_main_url, response.url)
             
-            book_metadata = parse_book_page(response, book_main_url)
+            book = parse_book_page(response, book_main_url)
             
-            download_book(download_book_response, book_id, book_metadata['title'])
-            download_cover(book_metadata['cover_url'])
+            download_book(download_book_response, book_id, book['title'])
+            download_cover(book['cover_url'])
 
-            print(json.dumps(book_metadata, indent=4, ensure_ascii=False))
+            print(json.dumps(book, indent=4, ensure_ascii=False))
             print(f'Book [{book_id}]: DOWNLOADED.')
 
         except RedirectError as error:
