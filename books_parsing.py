@@ -68,7 +68,12 @@ def parse_book_page(response, book_url):
     return book
 
 
-def download_book(response, book_id, book_name, book_folder = 'Books'):
+def download_book(book_url, book_id, book_name, book_folder = 'Books'):
+    response = requests.get(book_url, params={'id': book_id})
+    response.raise_for_status()
+
+    check_for_redirect(f"{book_url}?id={book_id}", response.url)
+
     os.makedirs(book_folder, exist_ok=True)
     correct_book_name = sanitize_filename(book_name)
     full_path = os.path.join(
@@ -130,13 +135,6 @@ if __name__ == '__main__':
 
     for book_id in range(start_id, end_id + 1):
         try:
-            download_book_url = f'https://tululu.org/txt.php'
-
-            download_book_response = requests.get(download_book_url, params={'id': book_id})
-            download_book_response.raise_for_status()
-
-            check_for_redirect(f"{download_book_url}?id={book_id}", download_book_response.url)
-            
             book_main_url = f'https://tululu.org/b{book_id}/'
 
             response = requests.get(book_main_url)
@@ -146,7 +144,7 @@ if __name__ == '__main__':
             
             book = parse_book_page(response, book_main_url)
             
-            download_book(download_book_response, book_id, book['title'])
+            download_book(f'https://tululu.org/txt.php', book_id, book['title'])
             download_cover(book['cover_url'])
 
             print(json.dumps(book, indent=4, ensure_ascii=False))
