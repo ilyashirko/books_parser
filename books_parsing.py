@@ -39,28 +39,26 @@ def text_length_limit(text, limit=140):
 
 
 def parse_book_page(response, book_url):
-    book = {}
-
     page_source = bs(response.text, 'lxml')
 
     book_meta = page_source.find('td', class_='ow_px_td')
     title, author = book_meta.find('h1').text.split('::')
-    book['title'] = title.strip()
-    book['author'] = author.strip()
-
+    
     cover_path = page_source.find(
         'div', class_='bookimage'
     ).findChild('img').get('src')
 
-    book['cover_url'] = urljoin(book_url, cover_path)
-
     comments_fields = page_source.find_all('div', class_='texts')
-    book['comments'] = [comment.find('span').text.strip() for comment in comments_fields]
     
     genres_field = page_source.find('span', class_='d_book')
-    book['genres'] = [genre.text for genre in genres_field.findChildren('a')]
     
-    return book
+    return {
+        'title': title.strip(),
+        'author': author.strip(),
+        'cover_url': urljoin(book_url, cover_path),
+        'comments': [comment.find('span').text.strip() for comment in comments_fields],
+        'genres': [genre.text for genre in genres_field.findChildren('a')]
+    }
 
 
 def download_book(book_url, book_id, book_name, book_folder = 'Books'):
