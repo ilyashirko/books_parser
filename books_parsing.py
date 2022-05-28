@@ -1,12 +1,11 @@
 import argparse
-from contextlib import suppress
 import json
-import time
 import os
+import time
+from contextlib import suppress
 from textwrap import dedent
 from urllib.parse import unquote, urljoin, urlsplit
 
-import lxml
 import requests
 from bs4 import BeautifulSoup as bs
 from pathvalidate import sanitize_filename
@@ -23,9 +22,9 @@ class RedirectError(Exception):
         return self.text
 
 
-def check_for_redirect(request_url, response_url):
-    if request_url != response_url:
-        raise RedirectError(f'REDIRECTED FROM "{request_url}" TO {response_url}.')
+def check_for_redirect(response):
+    if response.history:
+        raise RedirectError(f'REDIRECTED TO "{response.url}".')
 
 
 def text_length_limit(text, limit=140):
@@ -37,10 +36,6 @@ def text_length_limit(text, limit=140):
         return text[:limit]
     else:
         return text_length_limit(new_text)
-
-
-def was_redirected(original_url, actual_url):
-    return original_url != actual_url
 
 
 def parse_book_page(response, book_url):
@@ -71,8 +66,8 @@ def parse_book_page(response, book_url):
 def download_book(book_url, book_id, book_name, book_folder = 'Books'):
     response = requests.get(book_url, params={'id': book_id})
     response.raise_for_status()
-
-    check_for_redirect(f"{book_url}?id={book_id}", response.url)
+    
+    check_for_redirect(response)
 
     os.makedirs(book_folder, exist_ok=True)
     correct_book_name = sanitize_filename(book_name)
@@ -95,7 +90,7 @@ def download_cover(cover_url, cover_folder = 'Covers'):
     response = requests.get(cover_url)
     response.raise_for_status()
 
-    check_for_redirect(cover_url, response.url)
+    check_for_redirect(response)
     
     with open(full_path, 'wb') as photo:
         photo.write(response.content)
@@ -140,8 +135,8 @@ if __name__ == '__main__':
             response = requests.get(book_main_url)
             response.raise_for_status()
 
-            check_for_redirect(book_main_url, response.url)
-            
+            check_for_redirect(response)
+
             book = parse_book_page(response, book_main_url)
             
             download_book(f'https://tululu.org/txt.php', book_id, book['title'])
