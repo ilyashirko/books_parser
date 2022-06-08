@@ -1,4 +1,5 @@
 import json
+import os
 from urllib.parse import urljoin
 import time
 from contextlib import suppress
@@ -21,25 +22,53 @@ books_selector = "td.ow_px_td table tr div.bookimage a"
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=APP_DESCRIPTION)
-
+    default_json_path = os.path.join(os.getcwd(), 'books.json')
     parser.add_argument(
+        '-s',
         '--start_page',
         type=int,
         default=1,
-        help='искать "от"'
+        help='искать "от"',
+        metavar=''
     )
     parser.add_argument(
+        '-e',
         '--end_page',
         type=int,
         default=10,
-        help='искать "до" (должно быть больше чем "от")'
+        help='искать "до" (должно быть больше чем "от")',
+        metavar=''
     )
-
+    parser.add_argument(
+        '--skip_imgs',
+        action='store_true',
+        default=False,
+        help='не скачивать обложки'
+    )
+    parser.add_argument(
+        '--skip_txt',
+        action='store_true',
+        default=False,
+        help='не скачивать тексты книг'
+    )
+    parser.add_argument(
+        '--dest_folder',
+        default=None,
+        help='директория для загруженных файлов',
+        metavar=''
+    )
+    parser.add_argument(
+        '--json_path',
+        default=default_json_path,
+        help=f'директория для json с информацией о книгах (напр: {default_json_path})',
+        metavar=''
+    )
     args = parser.parse_args()
 
     start_page = args.start_page
     end_page = args.end_page
-
+    dest_folder = args.dest_folder
+    
     if end_page < start_page:
         print(
             dedent(
@@ -50,6 +79,9 @@ if __name__ == '__main__':
             ) 
         )
         exit()
+
+    books = dict()
+
     for page in range(start_page, end_page + 1):
         url = urljoin(TULULU_MAIN, f'{SCIENCE_FICTION_PATH}/{page}')
         response = requests.get(url)
@@ -60,24 +92,31 @@ if __name__ == '__main__':
         
         source = bs(response.text, 'lxml')
         
-        books = source.select(books_selector)
+        books_tags = source.select(books_selector)
         
-        for book in books:
+        for book in books_tags:
             try:
                 book_href = book.get('href')
 
                 book_id = ''.join((x for x in book_href if x.isdigit()))
 
                 book_main_url = urljoin(TULULU_MAIN, book_href)
-                print(book_main_url)
-
+                
                 response = requests.get(book_main_url)
                 book = parse_book_page(response, book_main_url)
 
-                download_book(f'https://tululu.org/txt.php', book_id, book['title'])
-                download_cover(book['cover_url'])
+                if not args.skip_txt:
+                    download_book(
+                        f'https://tululu.org/txt.php',
+                        book_id,
+                        book['title'],
+                        book_folder=dest_folder
+                    )
+                
+                if not args.skip_imgs:
+                    download_cover(book['cover_url'], cover_folder=dest_folder)
 
-                print(json.dumps(book, indent=4, ensure_ascii=False))
+                books.update({book_main_url: book})
                 print(f'Book [{book_id}]: DOWNLOADED.')
             except RedirectError as error:
                 print(error)
@@ -96,3 +135,6 @@ if __name__ == '__main__':
                 print(f'Book [{book_id}]: BAD REQUEST.')
             finally:
                 print('-' * 20)
+                
+    with open(args.json_path, 'w') as books_json:
+        json.dump(books, books_json, indent=4, ensure_ascii=False)

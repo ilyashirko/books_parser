@@ -63,6 +63,8 @@ def parse_book_page(response, book_url):
 
 
 def download_book(book_url, book_id, book_name, book_folder = 'Books'):
+    book_folder = book_folder or 'Books'
+
     response = requests.get(book_url, params={'id': book_id})
     response.raise_for_status()
     
@@ -79,6 +81,8 @@ def download_book(book_url, book_id, book_name, book_folder = 'Books'):
 
 
 def download_cover(cover_url, cover_folder = 'Covers'):
+    cover_folder = cover_folder or 'Covers'
+
     os.makedirs(cover_folder, exist_ok=True)
     _, photo_name = os.path.split(unquote(urlsplit(cover_url).path))
     full_path = os.path.join(cover_folder, photo_name)
