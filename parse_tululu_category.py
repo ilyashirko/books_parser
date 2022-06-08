@@ -5,9 +5,13 @@ from contextlib import suppress
 import lxml
 import requests
 from bs4 import BeautifulSoup as bs
+from textwrap import dedent
+import argparse
 
 from books_parsing import (RedirectError, check_for_redirect, download_book,
                            download_cover, parse_book_page)
+
+APP_DESCRIPTION = 'This app download science fiction books from tululu.'
 
 TULULU_MAIN = 'https://tululu.org/'
 
@@ -16,7 +20,37 @@ SCIENCE_FICTION_PATH = 'l55'
 books_selector = "td.ow_px_td table tr div.bookimage a"
 
 if __name__ == '__main__':
-    for page in range(1, 5):
+    parser = argparse.ArgumentParser(description=APP_DESCRIPTION)
+
+    parser.add_argument(
+        '--start_page',
+        type=int,
+        default=1,
+        help='искать "от"'
+    )
+    parser.add_argument(
+        '--end_page',
+        type=int,
+        default=10,
+        help='искать "до" (должно быть больше чем "от")'
+    )
+
+    args = parser.parse_args()
+
+    start_page = args.start_page
+    end_page = args.end_page
+
+    if end_page < start_page:
+        print(
+            dedent(
+                '''
+                "--end_id" должно быть больше числа "--start_id"
+                Например: python3 books_parsing.py --start_id 12 --end_id 19
+                '''
+            ) 
+        )
+        exit()
+    for page in range(start_page, end_page + 1):
         url = urljoin(TULULU_MAIN, f'{SCIENCE_FICTION_PATH}/{page}')
         response = requests.get(url)
         try:
