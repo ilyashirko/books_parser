@@ -18,9 +18,10 @@ TULULU_MAIN = 'https://tululu.org/'
 
 SCIENCE_FICTION_PATH = 'l55'
 
-books_selector = "td.ow_px_td table tr div.bookimage a"
+BOOKS_SELECTOR = "td.ow_px_td table tr div.bookimage a"
 
-if __name__ == '__main__':
+
+def make_parser():
     parser = argparse.ArgumentParser(description=APP_DESCRIPTION)
     default_json_path = os.path.join(os.getcwd(), 'books.json')
     parser.add_argument(
@@ -63,6 +64,11 @@ if __name__ == '__main__':
         help=f'директория для json с информацией о книгах (напр: {default_json_path})',
         metavar=''
     )
+    return parser
+
+
+if __name__ == '__main__':
+    parser = make_parser()
     args = parser.parse_args()
 
     start_page = args.start_page
@@ -84,15 +90,17 @@ if __name__ == '__main__':
 
     for page in range(start_page, end_page + 1):
         url = urljoin(TULULU_MAIN, f'{SCIENCE_FICTION_PATH}/{page}')
+
         response = requests.get(url)
         try:
             check_for_redirect(response)
         except RedirectError:
+            print('NOT FOUND: ', response.url)
             break
         
         source = bs(response.text, 'lxml')
         
-        books_tags = source.select(books_selector)
+        books_tags = source.select(BOOKS_SELECTOR)
         
         for book in books_tags:
             try:
@@ -103,6 +111,8 @@ if __name__ == '__main__':
                 book_main_url = urljoin(TULULU_MAIN, book_href)
                 
                 response = requests.get(book_main_url)
+                response.raise_for_status()
+                
                 book = parse_book_page(response, book_main_url)
 
                 if not args.skip_txt:
