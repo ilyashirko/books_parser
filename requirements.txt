@@ -3,3 +3,4 @@ bs4==0.0.1
 pathvalidate==2.5.0
 lxml==4.8.0
 jinja2
+livereload
