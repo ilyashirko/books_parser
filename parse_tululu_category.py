@@ -15,8 +15,6 @@ from bs4 import BeautifulSoup as bs
 from books_parsing import (RedirectError, check_for_redirect, download_book,
                            download_cover, parse_book_page)
 
-APP_DESCRIPTION = 'This app download science fiction books from tululu.'
-
 TULULU_MAIN = 'https://tululu.org/'
 
 SCIENCE_FICTION_PATH = 'l55'
@@ -25,7 +23,9 @@ BOOKS_SELECTOR = "td.ow_px_td table tr div.bookimage a"
 
 
 def make_parser():
-    parser = argparse.ArgumentParser(description=APP_DESCRIPTION)
+    parser = argparse.ArgumentParser(
+        description='This app download science fiction books from tululu.'
+    )
     default_json_path = os.path.join(os.getcwd(), 'books.json')
     parser.add_argument(
         '-s',
