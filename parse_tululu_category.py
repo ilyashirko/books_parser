@@ -15,12 +15,6 @@ from bs4 import BeautifulSoup as bs
 from books_parsing import (RedirectError, check_for_redirect, download_book,
                            download_cover, parse_book_page)
 
-TULULU_MAIN = 'https://tululu.org/'
-
-SCIENCE_FICTION_PATH = 'l55'
-
-BOOKS_SELECTOR = "td.ow_px_td table tr div.bookimage a"
-
 
 def make_parser():
     parser = argparse.ArgumentParser(
@@ -70,7 +64,7 @@ def make_parser():
     return parser
 
 
-if __name__ == '__main__':
+def main():
     parser = make_parser()
     args = parser.parse_args()
 
@@ -89,10 +83,14 @@ if __name__ == '__main__':
         )
         exit()
 
+    tululu_main = 'https://tululu.org/'
+
+    sciene_fiction_path = 'l55'
+
     books = dict()
 
     for page in range(start_page, end_page + 1):
-        url = urljoin(TULULU_MAIN, f'{SCIENCE_FICTION_PATH}/{page}')
+        url = urljoin(tululu_main, f'{sciene_fiction_path}/{page}')
 
         response = requests.get(url)
         try:
@@ -103,7 +101,7 @@ if __name__ == '__main__':
         
         source = bs(response.text, 'lxml')
         
-        books_tags = source.select(BOOKS_SELECTOR)
+        books_tags = source.select("td.ow_px_td table tr div.bookimage a")
         
         for book in books_tags:
             try:
@@ -111,7 +109,7 @@ if __name__ == '__main__':
 
                 book_id = ''.join((x for x in book_href if x.isdigit()))
 
-                book_main_url = urljoin(TULULU_MAIN, book_href)
+                book_main_url = urljoin(tululu_main, book_href)
                 
                 response = requests.get(book_main_url)
                 response.raise_for_status()
@@ -151,3 +149,7 @@ if __name__ == '__main__':
                 
     with open(args.json_path, 'w') as books_json:
         json.dump(books, books_json, indent=4, ensure_ascii=False)
+
+
+if __name__ == '__main__':
+    main()
