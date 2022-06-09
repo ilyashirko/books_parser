@@ -1,13 +1,16 @@
+import argparse
 import json
 import os
-from urllib.parse import urljoin
 import time
+
 from contextlib import suppress
+from textwrap import dedent
+from urllib.parse import urljoin
+
 import lxml
 import requests
+
 from bs4 import BeautifulSoup as bs
-from textwrap import dedent
-import argparse
 
 from books_parsing import (RedirectError, check_for_redirect, download_book,
                            download_cover, parse_book_page)
