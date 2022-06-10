@@ -6,3 +6,4 @@ Covers
 .vscode
 test.py
 **/__pycache__
+**/index*.html

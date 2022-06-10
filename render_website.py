@@ -3,6 +3,8 @@ import json
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from livereload import Server, shell
 from more_itertools import chunked
+import shutil
+import os
 
 
 def on_reload():
@@ -12,7 +14,7 @@ def on_reload():
     )
 
     template = env.get_template('template.html')
-
+    pages_dir = './pages'
     with open('books.json', 'r') as books_json:
         books = json.load(books_json)
 
@@ -21,14 +23,19 @@ def on_reload():
     for url, book_data in books.items():
         books_data.append(book_data)
 
-    shit = list(chunked(books_data, 2))
-    
-    rendered_page = template.render(
-        chunked_books=list(chunked(books_data, 2)),
-    )
-    
-    with open('index.html', 'w', encoding="utf8") as file:
-        file.write(rendered_page)
+    chunked_books = chunked(books_data, 10)
+
+    if os.path.isdir(pages_dir):
+        shutil.rmtree(pages_dir)
+    os.mkdir(pages_dir)
+
+    for num, books in enumerate(chunked_books):
+        rendered_page = template.render(
+            books=list(chunked(books, 2)),
+        )
+        
+        with open(f'{pages_dir}/index{num + 1}.html', 'w', encoding="utf8") as file:
+            file.write(rendered_page)
 
 
 if __name__ == '__main__':
