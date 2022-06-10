@@ -53,7 +53,7 @@ def parse_book_page(response, book_url):
     genres_field = page_source.find('span', class_='d_book')
     
     book = {
-        'title': title.strip(),
+        'title': sanitize_filename(title.strip()),
         'author': author.strip(),
         'cover_url': urljoin(book_url, cover_path),
         'comments': [comment.find('span').text.strip() for comment in comments_fields],
@@ -71,7 +71,7 @@ def download_book(book_url, book_id, book_name, book_folder = 'Books'):
     check_for_redirect(response)
 
     os.makedirs(book_folder, exist_ok=True)
-    correct_book_name = f"{book_id}. {sanitize_filename(book_name)}.txt"
+    correct_book_name = f"{sanitize_filename(book_name)}.txt"
     full_path = os.path.join(
         book_folder,
         text_length_limit(correct_book_name)

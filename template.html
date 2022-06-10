@@ -8,7 +8,7 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-    <title>Hello, world!</title>
+    <title>Reading books</title>
   </head>
   <body>
     
@@ -27,6 +27,7 @@
                     <h5 class="card-title">{{ books[0].title }}</h5>
                     <p class="card-text">{{ books[0].author }}</p>
                     <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
+                    <a href="{{'Books/%s.txt' | format(books[0].title) | urlencode}}" target="_blank" rel="noopener noreferrer">Читать</a>
                   </div>
                 </div>
               </div>
@@ -45,6 +46,7 @@
                     <h5 class="card-title">{{ books[1].title }}</h5>
                     <p class="card-text">{{ books[1].author }}</p>
                     <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
+                    <a href="{{'Books/%s.txt' | format(books[1].title) | urlencode}}" target="_blank" rel="noopener noreferrer">Читать</a>
                   </div>
                 </div>
               </div>
