@@ -6,6 +6,7 @@ from more_itertools import chunked
 import shutil
 import os
 
+PAGES_DIR = './pages'
 
 def on_reload():
     env = Environment(
@@ -14,7 +15,7 @@ def on_reload():
     )
 
     template = env.get_template('template.html')
-    pages_dir = './pages'
+    
     with open('books.json', 'r') as books_json:
         books = json.load(books_json)
 
@@ -25,20 +26,22 @@ def on_reload():
 
     chunked_books = chunked(books_data, 10)
 
-    if os.path.isdir(pages_dir):
-        shutil.rmtree(pages_dir)
-    os.mkdir(pages_dir)
+    if os.path.isdir(PAGES_DIR):
+        shutil.rmtree(PAGES_DIR)
+    os.mkdir(PAGES_DIR)
 
     for num, books in enumerate(chunked_books):
         rendered_page = template.render(
             books=list(chunked(books, 2)),
+            pages=len(chunked_books),
+            current=1
         )
         
-        with open(f'{pages_dir}/index{num + 1}.html', 'w', encoding="utf8") as file:
+        with open(f'{PAGES_DIR}/index{num + 1}.html', 'w', encoding="utf8") as file:
             file.write(rendered_page)
 
 
 if __name__ == '__main__':
     server = Server()
     server.watch('template.html', on_reload)
-    server.serve(root='.')   
+    server.serve(root=PAGES_DIR )   
