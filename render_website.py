@@ -1,10 +1,11 @@
-from http.server import HTTPServer, SimpleHTTPRequestHandler
 import json
+import os
+import shutil
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from livereload import Server, shell
 from more_itertools import chunked
-import shutil
-import os
 
 PAGES_DIR = 'pages'
 
@@ -18,7 +19,7 @@ def on_reload():
     
     with open('books.json', 'r') as books_json:
         books = json.load(books_json)
-
+    print(len(books))
     books_data = list()
 
     for url, book_data in books.items():
