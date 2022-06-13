@@ -23,11 +23,31 @@
     <div class="mx-auto" style="width: 200px;">
       <nav aria-label="Page navigation example">
         <ul class="pagination">
-          <li class="page-item"><a class="page-link" href="index{{current - 1}}.html">Previous</a></li>
+          {% if current == 1 %}
+            <li class="page-item disabled">
+          {% else %}
+            <li class="page-item">
+          {% endif %}
+              <a class="page-link" href="index{{current - 1}}.html">Previous</a>
+            </li>
+
           {% for page in range(1, pages +1 ) %}
-            <li class="page-item"><a class="page-link" href="{{ 'index%s.html' | format(page)}}">{{ page }}</a></li>
+            {% if page == current %}
+              <li class="page-item active">
+            {% else %}
+              <li class="page-item">
+            {% endif %}
+                <a class="page-link" href="{{ 'index%s.html' | format(page)}}">{{ page }}</a>
+              </li>
           {% endfor %}
-          <li class="page-item"><a class="page-link" href="index{{current + 1}}.html">Next</a></li>
+
+          {% if current == pages %}
+            <li class="page-item disabled">
+          {% else %}
+            <li class="page-item">
+          {% endif %}
+              <a class="page-link" href="index{{current + 1}}.html">Next</a>
+            </li>
         </ul>
       </nav>
     </div>
