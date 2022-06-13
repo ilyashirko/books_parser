@@ -19,18 +19,18 @@ def on_reload():
     
     with open('books.json', 'r') as books_json:
         books = json.load(books_json)
-    print(len(books))
+    
     books_data = list()
 
     for url, book_data in books.items():
         books_data.append(book_data)
     
     chunked_books = list(chunked(books_data, 10))
-
+    
     if os.path.isdir(PAGES_DIR):
         shutil.rmtree(PAGES_DIR)
     os.mkdir(PAGES_DIR)
-
+    
     for num, books in enumerate(chunked_books):
         rendered_page = template.render(
             books=list(chunked(books, 2)),
