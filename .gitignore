@@ -1,9 +1,6 @@
 env
 .env
-*.json
-Books
-Covers
+
 .vscode
 test.py
 **/__pycache__
-**/index*.html
