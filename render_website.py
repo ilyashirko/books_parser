@@ -1,10 +1,9 @@
 import json
 import os
 import shutil
-from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from livereload import Server, shell
+from livereload import Server
 from more_itertools import chunked
 
 PAGES_DIR = 'pages'
@@ -22,7 +21,7 @@ def on_reload():
     
     books_data = list()
 
-    for url, book_data in books.items():
+    for _, book_data in books.items():
         books_data.append(book_data)
     
     chunked_books = list(chunked(books_data, 10))
