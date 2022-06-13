@@ -6,7 +6,7 @@ from more_itertools import chunked
 import shutil
 import os
 
-PAGES_DIR = './pages'
+PAGES_DIR = 'pages'
 
 def on_reload():
     env = Environment(
@@ -23,8 +23,8 @@ def on_reload():
 
     for url, book_data in books.items():
         books_data.append(book_data)
-
-    chunked_books = chunked(books_data, 10)
+    
+    chunked_books = list(chunked(books_data, 10))
 
     if os.path.isdir(PAGES_DIR):
         shutil.rmtree(PAGES_DIR)
@@ -34,14 +34,13 @@ def on_reload():
         rendered_page = template.render(
             books=list(chunked(books, 2)),
             pages=len(chunked_books),
-            current=1
+            current=num+1 
         )
-        
-        with open(f'{PAGES_DIR}/index{num + 1}.html', 'w', encoding="utf8") as file:
+        with open(f'{PAGES_DIR}/index{num+1}.html', 'w', encoding="utf8") as file:
             file.write(rendered_page)
 
 
 if __name__ == '__main__':
     server = Server()
     server.watch('template.html', on_reload)
-    server.serve(root=PAGES_DIR )   
+    server.serve(root='.', default_filename='pages/index1.html')   
