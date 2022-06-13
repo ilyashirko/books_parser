@@ -80,12 +80,12 @@ def download_book(book_url, book_id, book_name, book_folder = 'Books'):
         new_book.write(response.content)
 
 
-def download_cover(cover_url, cover_folder = 'Covers'):
+def download_cover(cover_url, book_title, cover_folder = 'Covers'):
     cover_folder = cover_folder or 'Covers'
 
     os.makedirs(cover_folder, exist_ok=True)
     _, photo_name = os.path.split(unquote(urlsplit(cover_url).path))
-    full_path = os.path.join(cover_folder, photo_name)
+    full_path = os.path.join(cover_folder, f'{book_title}.jpg')
 
     if os.path.exists(full_path):
         return
@@ -143,7 +143,7 @@ if __name__ == '__main__':
             book = parse_book_page(response, book_main_url)
             
             download_book(f'https://tululu.org/txt.php', book_id, book['title'])
-            download_cover(book['cover_url'])
+            download_cover(book['cover_url'], book['title'])
 
             print(json.dumps(book, indent=4, ensure_ascii=False))
             print(f'Book [{book_id}]: DOWNLOADED.')

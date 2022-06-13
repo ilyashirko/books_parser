@@ -125,7 +125,7 @@ def main():
                     )
                 
                 if not args.skip_imgs:
-                    download_cover(book['cover_url'], cover_folder=dest_folder)
+                    download_cover(book['cover_url'], book['title'], cover_folder=dest_folder)
 
                 books.update({book_main_url: book})
                 print(f'Book [{book_id}]: DOWNLOADED.')
