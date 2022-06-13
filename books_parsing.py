@@ -27,15 +27,16 @@ def check_for_redirect(response):
         raise RedirectError(f'REDIRECTED TO "{response.url}".')
 
 
-def text_length_limit(text, limit=140):
+def text_length_limit(text, limit=130):
     if len(text) <= limit:
         return text
     splited_text = text.split('. ')
+    if len(splited_text) == 1:
+        splited_text = text.split(' ')
+        if len(splited_text) == 1:
+            return text[:limit]
     new_text = ' '.join(splited_text[:len(splited_text) - 1])
-    if new_text == text:
-        return text[:limit]
-    else:
-        return text_length_limit(new_text)
+    return text_length_limit(new_text)
 
 
 def parse_book_page(response, book_url):
@@ -53,7 +54,7 @@ def parse_book_page(response, book_url):
     genres_field = page_source.find('span', class_='d_book')
     
     book = {
-        'title': sanitize_filename(title.strip()),
+        'title': text_length_limit(sanitize_filename(title.strip())),
         'author': author.strip(),
         'cover_url': urljoin(book_url, cover_path),
         'comments': [comment.find('span').text.strip() for comment in comments_fields],
@@ -74,7 +75,7 @@ def download_book(book_url, book_id, book_name, book_folder = 'Books'):
     correct_book_name = f"{sanitize_filename(book_name)}.txt"
     full_path = os.path.join(
         book_folder,
-        text_length_limit(correct_book_name)
+        correct_book_name
     )
     with open(full_path, 'wb') as new_book:
         new_book.write(response.content)
@@ -85,7 +86,7 @@ def download_cover(cover_url, book_title, cover_folder = 'Covers'):
 
     os.makedirs(cover_folder, exist_ok=True)
     _, photo_name = os.path.split(unquote(urlsplit(cover_url).path))
-    full_path = os.path.join(cover_folder, f'{book_title}.jpg')
+    full_path = os.path.join(cover_folder, f'{(book_title)}.jpg')
 
     if os.path.exists(full_path):
         return
@@ -130,7 +131,7 @@ if __name__ == '__main__':
             ) 
         )
         exit()
-
+    books = dict()
     for book_id in range(start_id, end_id + 1):
         try:
             book_main_url = f'https://tululu.org/b{book_id}/'
@@ -147,7 +148,7 @@ if __name__ == '__main__':
 
             print(json.dumps(book, indent=4, ensure_ascii=False))
             print(f'Book [{book_id}]: DOWNLOADED.')
-
+            books.update({book_main_url: book})
         except RedirectError as error:
             print(error)
         except requests.exceptions.ConnectionError as error:
@@ -165,3 +166,5 @@ if __name__ == '__main__':
             print(f'Book [{book_id}]: BAD REQUEST.')
         finally:
             print('-' * 20)
+    with open('books.json', 'w') as books_json:
+        json.dump(books, books_json, indent=4, ensure_ascii=False)
