@@ -39,3 +39,12 @@ python3 books_parsing.py --start_id 15 --end_id 35
 ```
 python3 parse_tululu_category.py -s 20 -e 23 --skip_imgs
 ```
+## render_website.py
+Данный скрипт создан для генерации страниц сайта по шаблону `template.html` используя данные из `books.json` и для локального запуска сайта.  
+Для корректной работы вам необходимо скачать базу данных выполнив один из скриптов выше, запустить `render_website.py`:
+```
+python3 render_website.py
+```
+и далее необходимо пересохранить файл `template.html`. Скрипт поймет что информация обновилась и переопределит все страницы сайта. Сайт будет доступен по адресу [Reading books](http://127.0.0.1:5500/).  
+## Ознакомиться с сайтом
+Можно на странице [GitHub Pages](https://ilyashirko.github.io/books_parser/pages/index1.html)
