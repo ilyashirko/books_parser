@@ -8,6 +8,8 @@ from more_itertools import chunked
 
 PAGES_DIR = 'pages'
 
+BOOKS_PER_PAGE = 10
+
 def on_reload():
     env = Environment(
         loader=FileSystemLoader('.'),
@@ -19,12 +21,7 @@ def on_reload():
     with open('books.json', 'r') as books_json:
         books = json.load(books_json)
     
-    books_data = list()
-
-    for _, book_data in books.items():
-        books_data.append(book_data)
-    
-    chunked_books = list(chunked(books_data, 10))
+    chunked_books = list(chunked(list(books.values()), 10))
     
     if os.path.isdir(PAGES_DIR):
         shutil.rmtree(PAGES_DIR)
@@ -32,7 +29,7 @@ def on_reload():
     
     for num, books in enumerate(chunked_books):
         rendered_page = template.render(
-            books=list(chunked(books, 2)),
+            books=list(chunked(books, BOOKS_PER_PAGE)),
             pages=len(chunked_books),
             current=num+1 
         )
