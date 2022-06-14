@@ -42,5 +42,6 @@ def on_reload():
 
 if __name__ == '__main__':
     server = Server()
+    on_reload()
     server.watch('template.html', on_reload)
     server.serve(root='.', default_filename=f'{PAGES_DIR}/index1.html')   
