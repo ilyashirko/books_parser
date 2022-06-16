@@ -2,14 +2,11 @@ import argparse
 import json
 import os
 import time
-
 from contextlib import suppress
 from textwrap import dedent
 from urllib.parse import urljoin
 
-import lxml
 import requests
-
 from bs4 import BeautifulSoup as bs
 
 from books_parsing import (RedirectError, check_for_redirect, download_book,
@@ -58,7 +55,10 @@ def make_parser():
     parser.add_argument(
         '--json_path',
         default=default_json_path,
-        help=f'директория для json с информацией о книгах (напр: {default_json_path})',
+        help=(
+            f'директория для json с информацией о книгах '
+            f'(напр: {default_json_path})'
+        ),
         metavar=''
     )
     return parser
@@ -71,7 +71,7 @@ def main():
     start_page = args.start_page
     end_page = args.end_page
     dest_folder = args.dest_folder
-    
+
     if end_page < start_page:
         print(
             dedent(
@@ -79,7 +79,7 @@ def main():
                 "--end_id" должно быть больше числа "--start_id"
                 Например: python3 books_parsing.py --start_id 12 --end_id 19
                 '''
-            ) 
+            )
         )
         exit()
 
@@ -98,11 +98,11 @@ def main():
         except RedirectError:
             print('NOT FOUND: ', response.url)
             break
-        
+
         source = bs(response.text, 'lxml')
-        
+
         books_tags = source.select("td.ow_px_td table tr div.bookimage a")
-        
+
         for book in books_tags:
             try:
                 book_href = book.get('href')
@@ -110,22 +110,26 @@ def main():
                 book_id = ''.join((x for x in book_href if x.isdigit()))
 
                 book_main_url = urljoin(tululu_main, book_href)
-                
+
                 response = requests.get(book_main_url)
                 response.raise_for_status()
-                
+
                 book = parse_book_page(response, book_main_url)
 
                 if not args.skip_txt:
                     download_book(
-                        f'https://tululu.org/txt.php',
+                        'https://tululu.org/txt.php',
                         book_id,
                         book['title'],
                         book_folder=dest_folder
                     )
-                
+
                 if not args.skip_imgs:
-                    download_cover(book['cover_url'], book['title'], cover_folder=dest_folder)
+                    download_cover(
+                        book['cover_url'],
+                        book['title'],
+                        cover_folder=dest_folder
+                    )
 
                 books.update({book_main_url: book})
                 print(f'Book [{book_id}]: DOWNLOADED.')
@@ -146,7 +150,7 @@ def main():
                 print(f'Book [{book_id}]: BAD REQUEST.')
             finally:
                 print('-' * 20)
-                
+
     with open(args.json_path, 'w') as books_json:
         json.dump(books, books_json, indent=4, ensure_ascii=False)
 

@@ -14,6 +14,7 @@ APP_DESCRIPTION = (
     'Программа парсит сайт tululu.org, скачивает книги и информацию о них'
 )
 
+
 class RedirectError(Exception):
     def __init__(self, text='произошел редирект...'):
         self.text = text
@@ -44,31 +45,35 @@ def parse_book_page(response, book_url):
 
     book_meta = page_source.find('td', class_='ow_px_td')
     title, author = book_meta.find('h1').text.split('::')
-    
+
     cover_path = page_source.find(
         'div', class_='bookimage'
     ).findChild('img').get('src')
 
     comments_fields = page_source.find_all('div', class_='texts')
-    
+
     genres_field = page_source.find('span', class_='d_book')
-    
+
     book = {
         'title': text_length_limit(sanitize_filename(title.strip())),
         'author': author.strip(),
         'cover_url': urljoin(book_url, cover_path),
-        'comments': [comment.find('span').text.strip() for comment in comments_fields],
+        'comments': [
+            comment.find('span').text.strip()
+            for comment
+            in comments_fields
+        ],
         'genres': [genre.text for genre in genres_field.findChildren('a')]
     }
     return book
 
 
-def download_book(book_url, book_id, book_name, book_folder = 'Books'):
+def download_book(book_url, book_id, book_name, book_folder='Books'):
     book_folder = book_folder or 'Books'
 
     response = requests.get(book_url, params={'id': book_id})
     response.raise_for_status()
-    
+
     check_for_redirect(response)
 
     os.makedirs(book_folder, exist_ok=True)
@@ -81,7 +86,7 @@ def download_book(book_url, book_id, book_name, book_folder = 'Books'):
         new_book.write(response.content)
 
 
-def download_cover(cover_url, book_title, cover_folder = 'Covers'):
+def download_cover(cover_url, book_title, cover_folder='Covers'):
     cover_folder = cover_folder or 'Covers'
 
     os.makedirs(cover_folder, exist_ok=True)
@@ -95,7 +100,7 @@ def download_cover(cover_url, book_title, cover_folder = 'Covers'):
     response.raise_for_status()
 
     check_for_redirect(response)
-    
+
     with open(full_path, 'wb') as photo:
         photo.write(response.content)
 
@@ -128,7 +133,7 @@ if __name__ == '__main__':
                 "--end_id" должно быть больше числа "--start_id"
                 Например: python3 books_parsing.py --start_id 12 --end_id 19
                 '''
-            ) 
+            )
         )
         exit()
     books = dict()
@@ -142,8 +147,8 @@ if __name__ == '__main__':
             check_for_redirect(response)
 
             book = parse_book_page(response, book_main_url)
-            
-            download_book(f'https://tululu.org/txt.php', book_id, book['title'])
+
+            download_book('https://tululu.org/txt.php', book_id, book['title'])
             download_cover(book['cover_url'], book['title'])
 
             print(json.dumps(book, indent=4, ensure_ascii=False))
